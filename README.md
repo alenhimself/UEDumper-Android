@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Images/icon.png" alt="ourlogo" width="80" height="80"/>
+  <img src="Images/icon.png" alt="ourlogo" width="120" height="120"/>
 </p>
 
 # UEDumper-Android
