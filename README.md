@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>GUI version of <a href="https://github.com/MJx0/MobileDumper-7">MobileDumper-7</a> by <a href="https://github.com/MJx0">@MJx0</a> for Android</b>
+  <b>GUI version of  <a href="https://github.com/MJx0/MobileDumper-7">@MJx0</a> for Android</b>
 </p>
 
 <p align="center">
