@@ -14,7 +14,7 @@
 
 # UEDumper-Android
 
-UE dumper for **Android** with a Material3 GUI. Pick a game, tap dump, get a full Unreal Engine SDK as a `.zip`.
+Unreal engine dumper for **Android** with a Material3 GUI. Pick a game, tap dump, get a full Unreal Engine SDK as a `.zip`.
 
 > This project is Android-only. The dumping core is [MJx0/MobileDumper-7](https://github.com/MJx0/MobileDumper-7) (`v1.2.1`, based on [Dumper-7](https://github.com/Encryqed/Dumper-7), memory backend [KittyMemoryEx](https://github.com/MJx0/KittyMemoryEx)). iOS targets from upstream are not included here.
 
