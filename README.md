@@ -44,7 +44,7 @@ Grab the APK from [**Releases**](https://github.com/alenhimself/UEDumper-Android
 | PUBG Mobile | `com.tencent.ig`, `com.rekoo.pubgm`, `com.pubg.imobile`, `com.pubg.krmobile`, `com.vng.pubgmobile` |
 | Delta Force | `com.proxima.dfm`, `com.garena.game.df`, `com.tencent.tmgp.dfm` |
 | Valorant Mobile | `com.tencent.tmgp.codev` |
-| Farlight 84 | see `Dumper/Profile/CustomProfiles/Shared/Farlight84.h` |
+| Farlight 84 | Currently Unsupported Working On it  `Dumper/Profile/CustomProfiles/Shared/Farlight84.h` |
 
 Most UE games work with Auto-detect and need no profile at all.
 
