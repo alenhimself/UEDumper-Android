@@ -6,6 +6,12 @@
   <b>GUI version of <a href="https://github.com/MJx0/MobileDumper-7">MobileDumper-7</a> by <a href="https://github.com/MJx0">@MJx0</a> for Android</b>
 </p>
 
+<p align="center">
+  <a href="https://github.com/alenhimself/UEDumper-Android/releases"><img src="https://img.shields.io/github/v/release/alenhimself/UEDumper-Android?style=for-the-badge" alt="Latest Release"/></a>
+  <a href="https://github.com/alenhimself/UEDumper-Android/releases"><img src="https://img.shields.io/github/downloads/alenhimself/UEDumper-Android/total?style=for-the-badge" alt="Total Downloads"/></a>
+  <a href="https://github.com/alenhimself/UEDumper-Android/blob/main/LICENSE"><img src="https://img.shields.io/github/license/alenhimself/UEDumper-Android?style=for-the-badge" alt="License"/></a>
+</p>
+
 # UEDumper-Android
 
 UE dumper for **Android** with a Material3 GUI. Pick a game, tap dump, get a full Unreal Engine SDK as a `.zip`.
