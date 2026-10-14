@@ -1,0 +1,95 @@
+name: Android App
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Dumper/**"
+      - "libs/**"
+      - "android-app/**"
+      - "CMakeLists.txt"
+      - "CMakePresets.json"
+      - ".github/workflows/android-app.yml"
+  pull_request:
+    paths:
+      - "Dumper/**"
+      - "libs/**"
+      - "android-app/**"
+      - "CMakeLists.txt"
+      - "CMakePresets.json"
+  workflow_dispatch:
+
+jobs:
+  native:
+    name: Native executables
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install CMake + Ninja
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+      - name: Build exes (arm64, arm32, x86_64, x86)
+        run: |
+          for p in android-arm64-exe android-armeabi-v7a-exe android-x86_64-exe android-x86-exe; do
+            cmake --preset "$p"
+            cmake --build --preset "$p"
+          done
+      - name: Pack exes (keep ABI paths)
+        run: |
+          mkdir -p dist/arm64-v8a dist/armeabi-v7a dist/x86_64 dist/x86
+          cp -f builds/android/exe/release/arm64/MobileDumper-7  dist/arm64-v8a/MobileDumper-7
+          cp -f builds/android/exe/release/arm32/MobileDumper-7  dist/armeabi-v7a/MobileDumper-7
+          cp -f builds/android/exe/release/x86_64/MobileDumper-7 dist/x86_64/MobileDumper-7
+          cp -f builds/android/exe/release/x86/MobileDumper-7    dist/x86/MobileDumper-7
+          tar -czf dumper-exes.tar.gz -C dist .
+      - name: Upload exes
+        uses: actions/upload-artifact@v4
+        with:
+          name: dumper-exes
+          path: dumper-exes.tar.gz
+
+  apk:
+    name: Debug APK
+    runs-on: ubuntu-latest
+    needs: native
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
+      - name: Fetch native exes
+        uses: actions/download-artifact@v4
+        with:
+          name: dumper-exes
+          path: exes
+      - name: Stage exes into assets
+        run: |
+          tar -xzf exes/dumper-exes.tar.gz -C exes
+          for abi in arm64-v8a armeabi-v7a x86_64 x86; do
+            if [ ! -f "exes/$abi/MobileDumper-7" ]; then echo "missing exes/$abi/MobileDumper-7" && exit 1; fi
+            mkdir -p "android-app/app/src/main/assets/dumper/$abi"
+            cp -f "exes/$abi/MobileDumper-7" "android-app/app/src/main/assets/dumper/$abi/MobileDumper-7"
+            echo "staged $abi"
+          done
+      - name: Assemble debug APK
+        run: gradle -p android-app :app:assembleDebug --console=plain
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MobileDumper7-debug-apk
+          path: android-app/app/build/outputs/apk/debug/app-debug.apk

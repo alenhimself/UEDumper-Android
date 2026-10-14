@@ -36,6 +36,7 @@
 #include "Profile/CustomProfiles/Shared/PUBG.h"
 #include "Profile/CustomProfiles/Shared/DeltaForce.h"
 #include "Profile/CustomProfiles/Shared/Valorant.h"
+#include "Profile/CustomProfiles/Shared/Farlight84.h"
 
 inline std::vector<std::shared_ptr<IProfile>> UECustomProfiles;
 
@@ -46,6 +47,7 @@ std::vector<std::shared_ptr<IProfile>>& GetUECustomProfiles()
 		UECustomProfiles.push_back(std::make_shared<PUBGProfile>());
 		UECustomProfiles.push_back(std::make_shared<DeltaForceProfile>());
 		UECustomProfiles.push_back(std::make_shared<ValorantProfile>());
+		UECustomProfiles.push_back(std::make_shared<Farlight84Profile>());
 	}
 
 	return UECustomProfiles;

@@ -72,3 +72,13 @@ packages/
 *.dylib
 *.deb
 *.cache
+
+# UEDumper-Android app (local-only, rebuilt by build-app.cmd / CI)
+android-app/local.properties
+android-app/.gradle/
+android-app/app/build/
+android-app/app/src/main/assets/dumper/*/MobileDumper-7
+*.apk
+*.rar
+Building
+NDK
