@@ -1,115 +1,60 @@
-# MobileDumper-7
+# UEDumper-Android
 
-Mobile-focused dumper for all Unreal Engine games on iOS and Android, based on [Dumper-7](https://github.com/Encryqed/Dumper-7), using [KittyMemory](https://github.com/MJx0/KittyMemory) as the iOS memory backend and [KittyMemoryEx](https://github.com/MJx0/KittyMemoryEx) as the Android memory backend.
+UE dumper for **Android** with a Material3 GUI. Pick a game, tap dump, get a full Unreal Engine SDK as a `.zip`.
+
+> This project is Android-only. The dumping core is [MJx0/MobileDumper-7](https://github.com/MJx0/MobileDumper-7) (`v1.2.1`, based on [Dumper-7](https://github.com/Encryqed/Dumper-7), memory backend [KittyMemoryEx](https://github.com/MJx0/KittyMemoryEx)). iOS targets from upstream are not included here.
+
+## Download
+
+Grab the APK from [**Releases**](https://github.com/alenhimself/UEDumper-Android/releases).
+
+## Requirements
+
+- Rooted device — KernelSU, Magisk, or APatch. There is no non-root mode: reading another app's memory requires uid 0.
+- Android 8.0+ (`minSdk 26`). Ships binaries for `arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86` — the app picks the right one automatically.
+- The target game running in the foreground/background while dumping.
 
 ## Features
 
-- **Universal memory interface.**  
-  Every read/write, on both platforms, goes through one `IMemory` interface, so it's easier to add a new memory backend.
-- **Dedicated UE binary analyzer.**  
-  [UEAnalyzerKitty](Dumper/UEAnalyzerKitty/) is a UE binary scanner that auto locates `GObjects`/`GNames` when direct symbol/pattern lookup isn't enough but may use more memory.
-- **Full offset & layout auto-detection.**  
-  Every engine offset is automatically detected from live memory at runtime. Nothing is pinned to a specific Unreal Engine version or a hardcoded offset table.
-- **Per-game overrides when you need them.**  
-  Most games work out of the box; an `IProfile` interface exists for the rare games that need custom offsets or decryptions.
-- **Multiple dump outputs.**  
-  C++ SDK (see [UsingTheSDK](UsingTheSDK.md)), `.usmap` Mappings, IDA Mappings `.idmap`, and Dumpspace `.json`. The generated C++ SDK avoids MSVC-only calling conventions, so it compiles cleanly under clang/gcc.
-- **IDA & Ghidra mappings importer scripts.**  
-  Generated `.idmap` mapping files can be imported directly into IDA Pro or Ghidra, automatically restoring global symbols, exec function names, and VTable names. Global pointer references are also detected and renamed, making globals such as GObjects and their pointer slots easy to identify.
+- **Game picker.** One-tap chips for known profiles, an installed-app dropdown, and manual package input. The native core auto-selects the matching profile at runtime.
+- **Full dump options.** Memory access (`process_vm_readv` / `pread`), suspend-game toggle (SIGSTOP, recommended), and optional UE `.so` module dump.
+- **Every output, always.** C++ SDK (see [UsingTheSDK](UsingTheSDK.md)), `.usmap` mappings, IDA mappings `.idmap`, Dumpspace `.json`, and the GObjects list — packed into one `.zip`.
+- **Live console + result card.** Stream the dumper log in-app, then copy the path or share the `.zip`.
+- **Full offset & layout auto-detection.** Nothing is pinned to an engine version or a hardcoded offset table; the UE binary analyzer locates `GObjects`/`GNames` from live memory.
 
-## Platform Support
+## Supported games
 
-| Platform | Entry Point | Deployment |
-| --- | --- | --- |
-| Android | `Dumper/main_android.cpp` | Injected `.so`, or standalone CLI executable |
-| iOS | `Dumper/main_ios.mm` | MobileSubstrate tweak (`.deb`) on jailbroken devices, or a standalone `.dylib` for jailed devices |
+| Profile | Packages |
+| --- | --- |
+| Auto-detect (generic) | any UE game |
+| PUBG Mobile | `com.tencent.ig`, `com.rekoo.pubgm`, `com.pubg.imobile`, `com.pubg.krmobile`, `com.vng.pubgmobile` |
+| Delta Force | `com.proxima.dfm`, `com.garena.game.df`, `com.tencent.tmgp.dfm` |
+| Valorant Mobile | `com.tencent.tmgp.codev` |
+| Farlight 84 | see `Dumper/Profile/CustomProfiles/Shared/Farlight84.h` |
 
-> **Architecture Support**
->
-> - **ARM64** — Fully supported.
-> - **ARM32** — Partial support; results may vary.
-> - **Emulators** — Use the native `x86_64` or `x86` builds; do not use the ARM builds even if the emulator supports ARM translation.
+Most UE games work with Auto-detect and need no profile at all.
 
 ## Usage
 
-**iOS - Tweak (`.deb`):**  
-Install on a jailbroken device, launch a UE game, then tap the floating button that appears to configure and run a dump.
+1. Install the APK, launch the app, grant root when prompted.
+2. Pick the target game (chip, dropdown, or type the package).
+3. Keep Suspend ON, choose the memory type (`process_vm_readv` first, `pread` as fallback).
+4. Tap **Dump selected game** and wait — do not close the game.
+5. Share the `.zip` from the result card.
 
-**iOS - Library (`.dylib`):**  
-Inject the built `.dylib` into a UE game's `.ipa`, launch then tap the floating button that appears to configure and run a dump.
+## Custom game profiles
 
-**Android - Library (`.so`):**  
-Load into the target process, The dump runs automatically after 60 seconds once it's loaded, check logcat "MobileDumper-7" for logs.
+A profile is only needed when a game encrypts its UE internals (GNames pointers, name strings, object items).
 
-**Android - Standalone executable:**  
-If a required argument is missing, MobileDumper-7 will ask user input for it.
-
-```text
-$ ./MobileDumper-7 --help
-Usage: MobileDumper-7 [--help] [--version] [--package <name>] [--output <path>] [--dump] [--suspend] [--mem {1,2}]
-
-Optional arguments:
-  -h, --help             shows help message and exits
-  -v, --version          prints version information and exits
-  -p, --package <name>   Specify game package.
-  -o, --output <path>    Output directory path.
-  -d, --dump             Dump UE library from memory.
-  -s, --suspend          Send SIGSTOP to the game while dumping, then SIGCONT.
-  -m, --mem {1,2}        Specify memory access type (1: process_vm_readv, 2: pread).
-```
-
-**Recommended - Suspend the game while dumping:**  
-A running game keeps creating objects while it is being dumped, which may cause issues.  
-Freeze it with adding `-s` to the Android Executable, or the **Suspend Threads** toggle on iOS UI menu.  
-
-## Build
-
-Requires CMake 3.22+, Ninja, and the Android NDK or Xcode, C++20
-
-Clone with `--recurse-submodules` (or run
-`git submodule update --init --recursive` afterward if you already cloned without it):
-
-```bash
-git clone --recurse-submodules https://github.com/MJx0/MobileDumper-7.git
-cd MobileDumper-7
-```
-
-```bash
-# Android — shared library
-./build.sh --platform android --target lib --build release --arch arm64
-
-# Android — standalone executable (device, arm64)
-./build.sh --platform android --target exe --build release --arch arm64
-
-# Android — standalone executable (emulator, x86_64)
-./build.sh --platform android --target exe --build release --arch x86_64
-
-# iOS — dylib
-./build.sh --platform ios --target dylib --build release
-
-# iOS — theos tweak (requires Theos, $THEOS set)
-# --scheme accepts rootless, rootful, or roothide (default: rootless)
-./build.sh --platform ios --target theos --build release --scheme rootless
-```
-
-On Windows, use `build.cmd` with the same flags. Omit all flags to be prompted interactively.
-
-## Custom Game Profiles
-
-Most games work out of the box without a custom profile. A profile is only needed when a game applies custom encryption to its UE internals — typically to GNames pointers, name strings, or object items.
-
-To add one, create a header in `Dumper/Profile/CustomProfiles/` that inherits from `IProfile` and override only the methods the game requires:
+1. Create a header in `Dumper/Profile/CustomProfiles/Shared/`, e.g. `MyGame.h`:
 
 ```cpp
-// Dumper/Profile/CustomProfiles/Shared/MyGame.h
 #pragma once
 #include "../../IProfile.h"
 
 class MyGameProfile : public IProfile
 {
 public:
-    // Bundle ID on iOS / package name on Android.
-    // The profile is activated automatically when a supported game is detected.
     std::vector<std::string> GetSupportedGames() const override
     {
         return {"com.example.mygame"};
@@ -119,49 +64,46 @@ public:
 };
 ```
 
-Then register it in the platform entry point alongside the existing profiles:
+Available overrides (`Dumper/Profile/IProfile.h`): `GetGObjects` / `DecryptGObjects`, `GetGNames` / `DecryptGNames`, `DecryptNameChunk`, `DecryptNameEntry`, `DecryptUTF8` / `DecryptUTF16` / `DecryptUTF32`, `ResolveGObjectsLayout`, `ResolveGNamesLayout`, `OverrideSettings`, `OverrideDecryptCallbacks`. See `PUBG.h` (pattern-scan + pointer-chain GNames), `DeltaForce.h` (XOR strings), `Valorant.h` (encrypted chunks) for examples.
 
-- **iOS** — `Dumper/main_ios.mm` → `GetUECustomProfiles()`
-- **Android** — `Dumper/main_android.cpp` → `GetUECustomProfiles()`
+2. Register it in `Dumper/main_android.cpp` → `GetUECustomProfiles()`:
 
 ```cpp
 UECustomProfiles.push_back(std::make_shared<MyGameProfile>());
 ```
 
-### Available overrides
+3. Rebuild (below). The app needs no change — it passes the package name and the core picks your profile. Optionally add a chip in `android-app/.../GameProfiles.kt`.
 
-| Method | When to override |
-| -------- | ----------------- |
-| `GetGObjects()` | GObjects pointer cannot be found automatically |
-| `DecryptGObjects(uintptr_t&)` | GObjects pointer is encrypted after retrieval |
-| `GetGNames()` | GNames pointer cannot be found automatically — see PUBG example below |
-| `DecryptGNames(uintptr_t&)` | GNames pointer is encrypted after retrieval — see PUBG example below |
-| `DecryptNameChunk(...)` | Name chunk addresses are encrypted |
-| `DecryptNameEntry(...)` | Individual name entry addresses are encrypted |
-| `DecryptUTF8/UTF16/UTF32(...)` | Name strings are encrypted in memory — see Delta Force example below |
-| `ResolveGObjectsLayout(...)` | Auto layout detection fails; provide the layout manually |
-| `ResolveGNamesLayout(...)` | Auto layout detection fails; provide the layout manually |
-| `OverrideSettings(FSettings&)` | Tweak Generator settings for this game |
-| `OverrideDecryptCallbacks(FDecryptCallbacks&)` | Engine values are encrypted in memory |
+## Building from source
 
-### Examples
+Prerequisites: JDK 21, Android SDK (`platforms;android-34`, `build-tools;34.0.0`), **NDK r27+** (r25 cannot compile this source — it needs C++20 `std::same_as` and friends), CMake 3.22+, Ninja, Gradle 8.7.
 
-**PUBG Mobile** ([Dumper/Profile/CustomProfiles/Shared/PUBG.h](Dumper/Profile/CustomProfiles/Shared/PUBG.h)) — GNames is encrypted, so the profile scans the executable for a known byte pattern, decodes the ADRP instruction to locate it, then decrypts the pointer chain:
+On Windows, one command does everything (native exes → app assets → debug APK):
 
-```cpp
-uintptr_t GetGNames() const override { /* pattern scan → ADRP decode */ }
-void DecryptGNames(uintptr_t& NamesPtr) const override { /* pointer chain walk */ }
+```
+build-app.cmd
 ```
 
-**Delta Force** ([Dumper/Profile/CustomProfiles/Shared/DeltaForce.h](Dumper/Profile/CustomProfiles/Shared/DeltaForce.h)) — GNames resolves normally; only the name strings are XOR-encrypted with a length-derived key:
+Manual equivalent: `cmake --preset android-<abi>-exe && cmake --build --preset android-<abi>-exe` for `arm64`, `armeabi-v7a`, `x86_64`, `x86`, copy each binary to `android-app/app/src/main/assets/dumper/<abi>/MobileDumper-7`, then `gradle -p android-app :app:assembleDebug`. CI (`.github/workflows/android-app.yml`) does the same on every push.
 
-```cpp
-void DecryptUTF8(char* Data, int32_t Len) const override { /* XOR each byte */ }
-void DecryptUTF16(char16_t* Data, int32_t Len) const override { /* XOR each char16 */ }
+Clone with submodules:
+
+```
+git clone --recurse-submodules https://github.com/alenhimself/UEDumper-Android.git
 ```
 
-## Credits & Thanks
+## Project structure
 
-[Dumper-7](https://github.com/Encryqed/Dumper-7)
+```
+Dumper/                 Dumping core (UE analyzer, generators, memory, profiles)
+libs/                   KittyMemoryEx submodule
+android-app/            Material3 GUI (libsu root shell, game picker, console)
+  design/               Icon source art
+build-app.cmd           One-shot Windows build (native + APK)
+.github/workflows/     CI: native exes + debug APK artifacts
+```
 
-[UEDumper](https://github.com/Spuckwaffel/UEDumper)
+## Credits & license
+
+- [MJx0/MobileDumper-7](https://github.com/MJx0/MobileDumper-7), [Dumper-7](https://github.com/Encryqed/Dumper-7), [UEDumper](https://github.com/Spuckwaffel/UEDumper), [KittyMemoryEx](https://github.com/MJx0/KittyMemoryEx)
+- MIT — see [LICENSE](LICENSE).
