@@ -2,6 +2,10 @@
   <img src="Images/icon.png" alt="ourlogo" width="120" height="120"/>
 </p>
 
+<p align="center">
+  <b>GUI version of <a href="https://github.com/MJx0/MobileDumper-7">MobileDumper-7</a> by <a href="https://github.com/MJx0">@MJx0</a> for Android</b>
+</p>
+
 # UEDumper-Android
 
 UE dumper for **Android** with a Material3 GUI. Pick a game, tap dump, get a full Unreal Engine SDK as a `.zip`.
